@@ -12,6 +12,16 @@ namespace Zimbra\ZCS;
 
 class SoapClient
 {
+    /**
+     * Namespace constants
+     */
+    const ACCOUNT_NS   = 'urn:zimbraAccount';
+    const ADMIN_NS     = 'urn:zimbraAdmin';
+    const ADMIN_EXT_NS = 'urn:zimbraAdminExt';
+    const MAIL_NS      = 'urn:zimbraMail';
+    const REPL_NS      = 'urn:zimbraRepl';
+    const SYNC_NS      = 'urn:zimbraSync';
+    const VOICE_NS     = 'urn:zimbraVoice';
 
     /**
      * The XML message that is going to be sent to the Soap Server
@@ -35,7 +45,13 @@ class SoapClient
      * When true all XML will be outputted
      * @var bool
      */
-    static public $debug = false;
+    static public $debug = true;
+
+    /**
+     * Namespace command used
+     * @var string
+     */
+    public $namespace = self::ACCOUNT_NS;
 
     /**
      * Constructor which initializes the connection to the receiving server
@@ -99,7 +115,7 @@ class SoapClient
      */
     public function auth($username, $password)
     {
-        $xml = $this->request('AuthRequest', array('name' => $username, 'password' => $password));
+        $xml = $this->request('AuthRequest', array(), array('account' => $username,'password' => $password));
         $authToken = $xml->children()->AuthResponse->authToken;
         $this->addContextChild('authToken', $authToken);
         return (string) $authToken;
@@ -154,38 +170,13 @@ class SoapClient
 
         unset($this->message->children('soap', true)->Body);
         $body = $this->message->addChild('Body');
-        $actionChild = $body->addChild($action, null, 'urn:zimbraAdmin');
+        $actionChild = $body->addChild($action, null, $this->namespace);
 
         foreach ($attributes as $key => $value) {
             $actionChild->addAttribute($key, $value);
         }
 
-        foreach ($params as $key => $value) {
-            if (is_array($value)) {
-                switch ($key) {
-                    case 'attributes':
-                        foreach ($value as $l => $b) {
-                            if(is_bool($b)){
-                                $b = ($b === true) ? 'TRUE' : 'FALSE';
-                            }
-                            $newParam = $actionChild->addChild('a', $b);
-                            $newParam->addAttribute('n', $l);
-                        }
-                        break;
-                    default:
-                        $newParam = $actionChild->addChild($key, $value['_']);
-                        unset($value['_']);
-                        foreach ($value as $l => $b) {
-                            if(is_bool($b)){
-                                $b = ($b === true) ? 'TRUE' : 'FALSE';
-                            }
-                            $newParam->addAttribute($l, $b);
-                        }
-                }
-            } else {
-                $actionChild->addChild($key, $value);
-            }
-        }
+        $actionChild = self::formatRequestXml($params, $actionChild);
 
         if(self::$debug === true){
             echo PHP_EOL.PHP_EOL."## REQUEST".PHP_EOL;
@@ -244,6 +235,34 @@ class SoapClient
         @$dom->loadXML($xml);
         $output = $dom->saveXML();
         return $escape ? htmlentities($output, ENT_QUOTES, 'utf-8') : $output;
+    }
+
+    /**
+     * Takes an array and converts it to an xml child element of the given
+     * child node.
+     * @param array $params
+     * @param SimpleXml $child
+     */
+    public function formatRequestXml ($params, $child) {
+        foreach ($params as $key => $value) {
+            if (is_array($value)) {
+                switch ($key) {
+                    case 'attributes':
+                        foreach ($value as $l => $b) {
+                            if(is_bool($b)){
+                                $b = ($b === true) ? 'TRUE' : 'FALSE';
+                            }
+                            $child->addAttribute($l, $b);
+                        }
+                        break;
+                    default:
+                        $childNode = $child->addChild($key);
+                        self::formatRequestXml($value, $childNode);
+                }
+            } else {
+                $child->addChild($key, $value);
+            }
+        }
     }
 
     public static function getExceptionForFault($faultMessage)

@@ -75,19 +75,48 @@ class Account extends \Zimbra\ZCS\Mail
      * @param string $uid The UID of the appointment to cancel.
      * @return simpleXML vobject with the cancelled appointment.
      */
-    public function createAppointment($id, $cancelDate)
+    public function createAppointment($start, $end, $subject, $description, $location)
     {
-        $attributes = array(
-            'id' => $id,
-            'comp' => '0'
-            );
+        $attributes = array();
 
         $params = array(
-            'inst' => array(
-                'd' => $cancelDate
+            'm' => array(
+                'inv' => array(
+                    'comp' => array(
+                        'attributes' => array(
+                            'status' => 'CONF',
+                            'fb' => 'B',
+                            'name' => $subject,
+                            'loc' => $location
+                        ),
+                        's' => array(
+                            'attributes' => array(
+                                'd' => $start
+                            )
+                        ),
+                        'e' => array(
+                            'attributes' => array(
+                                'd' => $end
+                            )
+                        ),
+                        'descHtml' => $description,
+                        'desc' => $subject,
+                        'alarm' => array(
+                            'attributes' => array(
+                                'action' => 'DISPLAY'
+                            ),
+                            'trigger' => array(
+                                'rel' => array(
+                                    'attributes' => array(
+                                        'm' => 1
+                                    )
+                                )
+                            )
+                        )
+                    )
                 )
-            );
-
+            )
+        );
         $response = $this->soapClient->request('CreateAppointmentRequest', $attributes, $params);
 
         return $response;
@@ -131,11 +160,7 @@ class Account extends \Zimbra\ZCS\Mail
             'comp' => '0'
             );
 
-        $params = array(
-            'inst' => array(
-                'range' => 'THISANDFUTURE'
-                )
-            );
+        $params = array();
 
         $response = $this->soapClient->request('CancelAppointmentRequest', $attributes, $params);
 

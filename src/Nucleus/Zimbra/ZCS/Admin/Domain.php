@@ -32,12 +32,12 @@ class Domain
      * @param string $domain
      * @return \Zimbra\ZCS\Entity\Domain
      */
-    public function getDomain($value, $by = 'id')
+    public function getDomain($domain)
     {
         $params = array(
             'domain' => array(
-                '_'  => $value,
-                'by' => $by
+                '_'  => $domain,
+                'by' => 'id'
             )
         );
 
