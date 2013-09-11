@@ -44,7 +44,7 @@ class Account extends \Zimbra\ZCS\Mail
             );
 
         $response = $this->soapClient->request('SearchRequest', $attributes, $params);
-        $appointments = $response->children()->SearchDirectoryResponse->children();
+        $appointments = $response->children()->SearchResponse;
 
         return $appointments;
     }
