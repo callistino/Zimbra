@@ -24,14 +24,32 @@ class Account
                 'by' => 'id',
             )
         );
-
         $response = $this->soapClient->request('GetAccountRequest', array(), $params);
         $accounts = $response->children()->GetAccountResponse->children();
-
         return \Zimbra\ZCS\Entity\Account::createFromXml($accounts[0]);
     }
 
+    public function getAccountIDByUsername($username){
+        $attributes = array(
+        );
+        $params = array(
+            'owner' => array(
+                'attributes'=>array(
+                    'by'=>'name'
+                ),
+                $username
+            )
 
+        );
+
+        $response = $this->soapClient->request('GetShareInfoRequest', $attributes, $params);
+        $xml = $response->children()->GetShareInfoResponse->children()->share;
+
+
+        $attr = $xml->attributes();
+        return $attr['ownerId'].":".$attr['folderId'];
+
+    }
 
     /**
      * Searches the GAL for a matching account name.
@@ -64,6 +82,7 @@ class Account
 
         return $results;
     }
+
 
     /**
      * Searches the GAL for a matching account name.
