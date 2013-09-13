@@ -31,11 +31,11 @@ class Account extends \Zimbra\ZCS\Mail
      *
      * @return SimpleXML object calendar
      */
-    public function getAppointments()
+    public function getAppointments($start,$end)
     {
         $attributes = array(
-            'calExpandInstStart' => "0",
-            'calExpandInstEnd' => "0",
+            'calExpandInstStart' => $start,
+            'calExpandInstEnd' => $end,
             'types' => 'appointment'
             );
 
@@ -44,10 +44,46 @@ class Account extends \Zimbra\ZCS\Mail
             );
 
         $response = $this->soapClient->request('SearchRequest', $attributes, $params);
-        $appointments = $response->children()->SearchDirectoryResponse->children();
+        $appointments = $response->children()->SearchResponse;
+        return $appointments;
 
+    }
+
+    public function getAppointmentsByUserID($userID, $searchByName){
+        $attributes = array(
+            'calExpandInstStart' =>   1377925200000,//"1377009106000",//date("Ymd") ."T010000Z"   ,//
+            'calExpandInstEnd' =>     1377925200000,//"0",//date("Ymd") ."T010000Z",
+            'types' => 'appointment'
+        );
+
+        $params = array(
+            'query' => "inid:\"$userID\" #name:\"$searchByName\""
+            //Item:all
+            //#loc:\"Rhoden's Office\"
+            //#recur:no
+            //#name:\"scrum\"
+        );
+        $response = $this->soapClient->request('SearchRequest', $attributes, $params);
+        $appointments = $response->children()->SearchResponse;
         return $appointments;
     }
+
+    public function getRecurByAppointmentID($id){
+        $attributes = array(
+            //'calExpandInstStart' =>   1377925200000,//"1377009106000",//date("Ymd") ."T010000Z"   ,//
+            //'calExpandInstEnd' =>     1377925200000,//"0",//date("Ymd") ."T010000Z",
+            //'types' => 'appointment'
+            'id' => $id
+        );
+        $params = array(
+
+        );
+        $response = $this->soapClient->request('GetRecurRequest', $attributes, $params);
+        $GetRecurResponse = $response->children()->GetRecurResponse;
+        return $GetRecurResponse;
+
+    }
+
 
     /**
      * Get appointment by uid
@@ -78,11 +114,18 @@ class Account extends \Zimbra\ZCS\Mail
     public function createAppointment($start, $end, $subject, $description, $location)
     {
         $attributes = array();
-
         $params = array(
             'm' => array(
                 'inv' => array(
                     'comp' => array(
+                        'at' => array(
+                            'role'  => "NON",
+                            'ptst'  => "NE",
+                            'cutype'=> "RES",
+                            'rsvp'  => "0",
+                            'a' => "$location@franklinamerican.com",
+                            'd' => "6th Floor Dev Conference Room"
+                        ),
                         'attributes' => array(
                             'status' => 'CONF',
                             'fb' => 'B',
@@ -99,6 +142,11 @@ class Account extends \Zimbra\ZCS\Mail
                                 'd' => $end
                             )
                         ),
+                        'or'=>array(
+                            "a"=>"voyager@franklinamerican.com",
+                            "d"=>"voy ager"
+                        ),
+                        "allDay"=>"0",
                         'descHtml' => $description,
                         'desc' => $subject,
                         'alarm' => array(
@@ -114,6 +162,11 @@ class Account extends \Zimbra\ZCS\Mail
                             )
                         )
                     )
+                ),
+                'e' => array(
+                    'a' => "$location@franklinamerican.com",
+                    'p' => "6th Floor Dev Conference Room",
+                    't' => "t"
                 )
             )
         );
@@ -134,15 +187,12 @@ class Account extends \Zimbra\ZCS\Mail
             'id' => $id,
             'comp' => '0'
             );
-
         $params = array(
             'inst' => array(
                 'd' => $cancelDate
                 )
             );
-
         $response = $this->soapClient->request('CancelAppointmentRequest', $attributes, $params);
-
         return $response;
     }
 

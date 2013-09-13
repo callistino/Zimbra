@@ -259,8 +259,10 @@ class SoapClient
                         $childNode = $child->addChild($key);
                         self::formatRequestXml($value, $childNode);
                 }
-            } else {
+            } elseif (!is_numeric($key)) {
                 $child->addChild($key, $value);
+            }else{
+                $child[0] = $value;
             }
         }
     }

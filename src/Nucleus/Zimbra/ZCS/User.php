@@ -22,7 +22,9 @@ abstract class User
      */
     public function __construct(\Zimbra\ZCS\SoapClient $client)
     {
+        $client->namespace = \Zimbra\ZCS\SoapClient::ACCOUNT_NS;
         $this->setSoapClient($client);
+
     }
 
     /**
