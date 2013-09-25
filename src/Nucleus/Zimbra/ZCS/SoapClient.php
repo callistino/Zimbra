@@ -45,7 +45,7 @@ class SoapClient
      * When true all XML will be outputted
      * @var bool
      */
-    static public $debug = true;
+    static public $debug = false;
 
     /**
      * Namespace command used

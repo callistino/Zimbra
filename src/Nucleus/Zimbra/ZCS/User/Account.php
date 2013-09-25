@@ -95,18 +95,28 @@ class Account
      */
     public function getCal($query = '')
     {
-        $attributes = array();
+        $attributes = array(
+
+        );
 
         $params = array(
             'query' => htmlspecialchars($query, ENT_QUOTES)
         );
-
         $response = $this->soapClient->request('GetICalRequest', $attributes, $params);
         var_dump($response);
         die();
         $calList = $response->children()->SearchDirectoryResponse->children();
-
         return $calList;
     }
+	public function getDistributionListMembersRequest($distributionList){
+        $attributes = array(
 
+        );
+        $params = array(
+            'dl' => $distributionList."@franklinamerican.com"
+        );
+        $response = $this->soapClient->request('GetDistributionListMembersRequest', $attributes, $params);
+        $members = $response->children();//->SearchDirectoryResponse->children();
+        return $members;
+    }
 }
